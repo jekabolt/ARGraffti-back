@@ -8,6 +8,7 @@ type Graffity struct {
 	Latitude  float64 `json:"latitude"`
 	Height    float64 `json:"height"`
 	Message   string  `json:"message"`
+	Gang      string  `json:"gang"`
 }
 
 type User struct {
@@ -19,4 +20,14 @@ type User struct {
 type Login struct {
 	UserID string `json:"userid"`
 	Gang   string `json:"gang"`
+}
+
+type Coordinates struct {
+	Longitude float64 `json:"longitude"`
+	Latitude  float64 `json:"latitude"`
+}
+type MapZone struct {
+	Longitude float64 `json:"longitude"`
+	Latitude  float64 `json:"latitude"`
+	Gang      string  `json:"gang"`
 }

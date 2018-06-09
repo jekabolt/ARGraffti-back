@@ -1,15 +1,11 @@
 FROM golang:1.9.4
 
-RUN go get github.com/Appscrunch/Multy-back && \
-    rm -rf $GOPATH/src/github.com/Appscrunch/Multy-back && \
-    cd $GOPATH/src/github.com/Appscrunch && \ 
-    git clone https://github.com/Appscrunch/Multy-back.git && \ 
-    cd Multy-back && \ 
-    git checkout release_1.1 && \  
-    go get firebase.google.com/go   && \ 
-    go get firebase.google.com/go/messaging  && \ 
-    go get google.golang.org/api/option  && \ 
-    go get github.com/satori/go.uuid
+RUN go get github.com/jekabolt/ARGraffti-back && \
+    rm -rf $GOPATH/src/github.com/jekabolt/ARGraffti-back && \
+    cd $GOPATH/src/github.com/jekabolt && \ 
+    git clone https://github.com/jekabolt/ARGraffti-back.git && \ 
+    cd ARGraffti-back 
+
 
 RUN cd $GOPATH/src/github.com/Appscrunch && \
     git clone https://github.com/Appscrunch/Multy-BTC-node-service.git && \

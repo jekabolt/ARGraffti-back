@@ -11,7 +11,7 @@ import (
 const (
 	msgErrHeaderError      = "wrong authorization headers"
 	msgErrRequestBodyError = "missing request body params"
-	msgErrNoSuchUser       = "missing request body params"
+	msgErrNoSuchUser       = "no such user"
 )
 
 type RestClient struct {
@@ -83,15 +83,15 @@ func (restClient *RestClient) getUserGraffity() gin.HandlerFunc {
 		g, err := restClient.userStore.GetAllUserGraffitys(userid)
 		if err != nil {
 			restClient.log.Errorf("addWallet: getIdenity: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			c.JSON(http.StatusOK, gin.H{
-				"code":    http.StatusOK,
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"code":    http.StatusInternalServerError,
 				"message": err.Error(),
 			})
 			return
 		}
 
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code":    http.StatusInternalServerError,
+		c.JSON(http.StatusOK, gin.H{
+			"code":    http.StatusOK,
 			"message": g,
 		})
 	}
@@ -99,23 +99,25 @@ func (restClient *RestClient) getUserGraffity() gin.HandlerFunc {
 
 func (restClient *RestClient) postGraffity() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userid, err := getIdenity(c)
-		if err != nil {
-			restClient.log.Errorf("addWallet: getIdenity: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": msgErrHeaderError,
-			})
-			return
-		}
+		// userid, err := getIdenity(c)
+		// if err != nil {
+		// 	restClient.log.Errorf("addWallet: getIdenity: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+		// 	c.JSON(http.StatusBadRequest, gin.H{
+		// 		"code":    http.StatusBadRequest,
+		// 		"message": msgErrHeaderError,
+		// 	})
+		// 	return
+		// }
+		// bs, _ := json.Marshal(&store.Graffity{})
+		// fmt.Println(string(bs))
 
-		if restClient.userStore.CheckUser(userid) {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": msgErrNoSuchUser,
-			})
-			return
-		}
+		// if !restClient.userStore.CheckUser(userid) {
+		// 	c.JSON(http.StatusBadRequest, gin.H{
+		// 		"code":    http.StatusBadRequest,
+		// 		"message": msgErrNoSuchUser,
+		// 	})
+		// 	return
+		// }
 
 		gr := store.Graffity{}
 		if err := decodeBody(c, &gr); err != nil {
@@ -125,10 +127,10 @@ func (restClient *RestClient) postGraffity() gin.HandlerFunc {
 			})
 			return
 		}
-		err = restClient.userStore.PostGraffity(gr)
-		if err := decodeBody(c, &gr); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"code":    http.StatusInternalServerError,
+		err := restClient.userStore.PostGraffity(gr)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"code":    http.StatusBadRequest,
 				"message": err.Error(),
 			})
 			return
@@ -144,12 +146,63 @@ func (restClient *RestClient) postGraffity() gin.HandlerFunc {
 
 func (restClient *RestClient) nearGraffitys() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		coordinates := store.Coordinates{}
+		// bs, _ := json.Marshal(&coordinates)
+		// fmt.Println(string(bs))
+		if err := decodeBody(c, &coordinates); err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrRequestBodyError,
+			})
+			return
+		}
+		gr, err := restClient.userStore.GetNearbyGraffitys(coordinates.Longitude, coordinates.Latitude)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"code":    http.StatusInternalServerError,
+				"message": err.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"code":    http.StatusOK,
+			"message": gr,
+		})
 
 	}
 }
 
 func (restClient *RestClient) getMapZones() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// coordinates := store.Graffity{}
+		// if err := decodeBody(c, &coordinates); err != nil {
+		// 	c.JSON(http.StatusOK, gin.H{
+		// 		"code":    http.StatusBadRequest,
+		// 		"message": msgErrRequestBodyError,
+		// 	})
+		// 	return
+		// }
+		gr, err := restClient.userStore.GetNearbyGraffitys(0, 0)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"code":    http.StatusInternalServerError,
+				"message": err.Error(),
+			})
+			return
+		}
+		mz := []store.MapZone{}
+		for _, graffity := range gr {
+			mz = append(mz, store.MapZone{
+				Longitude: graffity.Longitude,
+				Latitude:  graffity.Latitude,
+				Gang:      graffity.Gang,
+			})
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"code":    http.StatusOK,
+			"message": mz,
+		})
+		return
 
 	}
 }

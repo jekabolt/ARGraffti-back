@@ -33,7 +33,7 @@ type Conf struct {
 type UserStore interface {
 	NewUser(user User) error
 	GetAllUserGraffitys(userid string) ([]Graffity, error)
-	GetNearbyGraffitys(longitude, latitude string) ([]Graffity, error)
+	GetNearbyGraffitys(longitude, latitude float64) ([]Graffity, error)
 	PostGraffity(Graffity) error
 	CheckUser(userid string) bool
 }
@@ -63,10 +63,10 @@ func InitUserStore(conf Conf) (UserStore, error) {
 }
 
 func (mStore *MongoUserStore) NewUser(user User) error {
-	users := []User{}
+	u := User{}
 	err := mStore.usersData.Find(bson.M{
 		"userid": user.UserID,
-	}).All(&users)
+	}).One(u)
 
 	if err == mgo.ErrNotFound {
 		return mStore.usersData.Insert(user)
@@ -85,22 +85,26 @@ func (mStore *MongoUserStore) GetAllUserGraffitys(userid string) ([]Graffity, er
 	return allGraffitys, err
 }
 
-func (mStore *MongoUserStore) GetNearbyGraffitys(longitude, latitude string) ([]Graffity, error) {
+func (mStore *MongoUserStore) GetNearbyGraffitys(longitude, latitude float64) ([]Graffity, error) {
 	allGraffitys := []Graffity{}
 	err := mStore.graffitys.Find(nil).All(&allGraffitys)
 	return allGraffitys, err
 }
 
 func (mStore *MongoUserStore) PostGraffity(graffity Graffity) error {
-	return mStore.graffitys.Insert(graffity)
+	err := mStore.graffitys.Insert(graffity)
+	return err
 }
 
 func (mStore *MongoUserStore) CheckUser(userid string) bool {
 	users := []User{}
-	if err := mStore.graffitys.Find(bson.M{"userid": userid}).All(&users); err == mgo.ErrNotFound {
+	err := mStore.graffitys.Find(bson.M{"userid": userid}).All(&users)
+	if err != nil {
+		return false
+	} else {
 		return true
 	}
-	return false
+
 }
 func (mStore *MongoUserStore) Close() error {
 	mStore.session.Close()

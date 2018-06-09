@@ -8,12 +8,15 @@ LD_OPTS = -ldflags="-X main.branch=${BRANCH} -X main.commit=${COMMIT} -X main.la
 
 all:  build run
 
-all-with-deps: setup deps
+all-with-deps: 
 	cd cmd && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
 
 run:
 	cd $(GOPATH)/src/github.com/jekabolt/ARGraffti-back/cmd && rm -rf $(NAME) && cd .. && make build  && cd cmd && ./$(NAME) && ../
 	
+dist:
+	cd ./cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
+
 build:
 	 cd ./cmd/ && go build $(LD_OPTS) -o $(NAME) . && cd -
 
