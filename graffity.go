@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jekabolt/ARGraffti-back/client"
+	"github.com/jekabolt/ARGraffti-back/store"
 	"github.com/jekabolt/slf"
 )
 
@@ -14,8 +15,8 @@ var (
 
 // Multy is a main struct of service
 type Graffity struct {
-	config *Configuration
-	// userStore  store.UserStore
+	config     *Configuration
+	userStore  store.UserStore
 	restClient *client.RestClient
 	route      *gin.Engine
 }
@@ -25,12 +26,11 @@ func Init(conf *Configuration) (*Graffity, error) {
 	graffity := &Graffity{
 		config: conf,
 	}
-	// TODO: DB initialization
-	// userStore, err := store.InitUserStore(conf.Database)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("DB initialization: %s on port %s", err.Error(), conf.Database.Address)
-	// }
-	// multy.userStore = userStore
+	userStore, err := store.InitUserStore(conf.Database)
+	if err != nil {
+		return nil, fmt.Errorf("DB initialization: %s on port %s", err.Error(), conf.Database.Address)
+	}
+	graffity.userStore = userStore
 	log.Infof("UserStore initialization done on %s √", conf.Database)
 
 	// REST handlers
@@ -48,7 +48,7 @@ func (graffity *Graffity) initHttpRoutes(conf *Configuration) error {
 	gin.SetMode(gin.DebugMode)
 
 	restClient, err := client.SetRestHandlers(
-		// graffity.userStore,
+		graffity.userStore,
 		router,
 	)
 	if err != nil {
